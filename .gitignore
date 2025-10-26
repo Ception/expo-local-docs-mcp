@@ -1,0 +1,55 @@
+# Cursor
+.cursor/
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# .env files
+.env
+.env.*
+
+# local env files
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+# ignore ios and android folders
+/ios
+/android
+
+# ignore redis dump
+dump.rdb
+
+# Pem and P12 files and private keys and certificates and CSRs
+*.pem
+*.p12
+*.key
+*.crt
+*.csr

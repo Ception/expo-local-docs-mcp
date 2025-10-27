@@ -46,7 +46,7 @@ async function testServer() {
     // Test 4: Get specific document
     const testPaths = [
       "/get-started/introduction",
-      "/versions/v54.0.0/sdk/camera",
+      "/versions/latest/sdk/camera",
       "/router/introduction",
     ];
 

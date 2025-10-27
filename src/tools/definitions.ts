@@ -37,7 +37,7 @@ export const toolDefinitions: Tool[] = [
         path: {
           type: "string",
           description:
-            "Path to the documentation page (e.g., '/guides/routing' or '/versions/v54.0.0/sdk/camera')",
+            "Path to the documentation page (e.g., '/guides/routing' or '/versions/latest/sdk/camera')",
         },
       },
       required: ["path"],

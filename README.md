@@ -99,7 +99,7 @@ Get the full content of a specific documentation page.
 
 **Parameters:**
 
-- `path` (string, required): Document path (e.g., `/versions/v54.0.0/sdk/camera`)
+- `path` (string, required): Document path (e.g., `/versions/latest/sdk/camera`)
 
 **Example:**
 

@@ -52,7 +52,7 @@ async function testAllTools() {
   console.log("📄 get_expo_doc_content");
   try {
     const doc1 = getDocumentByPath("/get-started/introduction");
-    const doc2 = getDocumentByPath("/versions/v54.0.0/sdk/camera");
+    const doc2 = getDocumentByPath("/versions/latest/sdk/camera");
     const doc3 = getDocumentByPath("/router/introduction");
     const doc4 = getDocumentByPath("/fake/path");
 
@@ -98,9 +98,9 @@ async function testAllTools() {
   // Test 4: get_expo_api_reference
   console.log("📖 get_expo_api_reference");
   try {
-    const apiDoc1 = getDocumentByPath("/versions/v54.0.0/sdk/camera");
-    const apiDoc2 = getDocumentByPath("/versions/v54.0.0/sdk/location");
-    const apiDoc3 = getDocumentByPath("/versions/v54.0.0/sdk/notifications");
+    const apiDoc1 = getDocumentByPath("/versions/latest/sdk/camera");
+    const apiDoc2 = getDocumentByPath("/versions/latest/sdk/location");
+    const apiDoc3 = getDocumentByPath("/versions/latest/sdk/notifications");
     const searchResults = searchInIndex("maps", 3).filter((r) =>
       r.path.includes("/sdk/")
     );

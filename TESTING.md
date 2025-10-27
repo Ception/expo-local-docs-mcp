@@ -21,10 +21,15 @@ Complete guide for testing your Expo Docs MCP Server.
 **Output:**
 
 ```
-✓ Search index loaded: 958 entries in 3ms
-✓ Found 38 sections
-✓ Search queries working
-✅ All tests passed!
+🧪 Basic Functionality Tests
+
+✓ Index loaded: 958 entries (3ms)
+✓ Sections found: 38
+✓ Search queries: 3/3 passed
+✓ Document retrieval: 3/3 passed
+✓ Cache validation: valid
+
+✅ All basic tests passed!
 ```
 
 **Use case:** Quick sanity check that everything works.
@@ -65,25 +70,38 @@ Complete guide for testing your Expo Docs MCP Server.
 **Output:**
 
 ```
-✓ Index loaded and ready
+🧪 Comprehensive Tool Tests
 
-🔍 Test 1: search_expo_docs
-   ✅ search_expo_docs: PASSED
+✓ Index ready
 
-📄 Test 2: get_expo_doc_content
-   ✅ get_expo_doc_content: PASSED
+🔍 search_expo_docs
+  ✓ Basic search
+  ✓ Section-filtered search
+  ✓ SDK search
 
-📚 Test 3: list_expo_sections
-   ✅ list_expo_sections: PASSED
+📄 get_expo_doc_content
+  ✓ Get introduction doc
+  ✓ Get SDK doc with frontmatter
+  ✓ Get router doc
+  ✓ Non-existent path handling
 
-📖 Test 4: get_expo_api_reference
-   ✅ get_expo_api_reference: PASSED
+📚 list_expo_sections
+  ✓ List all sections
+  ✓ Get router section docs
+  ✓ Get guides section docs
 
-🚀 Test 5: get_expo_quick_start
-   ✅ get_expo_quick_start: PASSED
+📖 get_expo_api_reference
+  ✓ Get camera API
+  ✓ Get location API
+  ✓ Get notifications API
+  ✓ Fallback search for modules
 
-✅ ALL TOOLS PASSED - No errors detected!
-🎉 Your MCP server is ready for production use!
+🚀 get_expo_quick_start
+  ✓ Get default quick start
+  ✓ Get specific topic
+  ✓ List all quick start topics
+
+✅ All comprehensive tests passed!
 ```
 
 **Use case:** Detailed verification of all MCP tools before deployment.

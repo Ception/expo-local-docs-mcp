@@ -1,11 +1,37 @@
 {
   "mcpServers": {
     "expo-docs": {
-      "command": "bun",
-      "args": ["/<workingdirectory>/expo-local-mcp/dist/server.js"],
-      "env": {
-        "EXPO_DOCS_PATH": "/<workingdirectory>/expo-local-mcp/expo-sdk",
-        "EXPO_CACHE_DIR": "/<workingdirectory>/expo-local-mcp/.expo-cache"
+      "_comment": "Install with: npm install -g expo-local-docs-mcp",
+      "command": "expo-local-docs-mcp"
+    }
+  },
+  
+  "alternative_configs": {
+    "npx": {
+      "_comment": "Zero install - uses npx",
+      "expo-docs": {
+        "command": "npx",
+        "args": ["expo-local-docs-mcp"]
+      }
+    },
+    
+    "local_development": {
+      "_comment": "For local development with bun",
+      "expo-docs": {
+        "command": "bun",
+        "args": ["/absolute/path/to/expo-local-docs-mcp/dist/server.js"],
+        "env": {
+          "EXPO_DOCS_PATH": "/absolute/path/to/expo-local-docs-mcp/expo-sdk",
+          "EXPO_CACHE_DIR": "/absolute/path/to/expo-local-docs-mcp/.expo-cache"
+        }
+      }
+    },
+    
+    "per_project": {
+      "_comment": "Install per project: npm install expo-local-docs-mcp",
+      "expo-docs": {
+        "command": "node",
+        "args": ["/absolute/path/to/your-project/node_modules/expo-local-docs-mcp/dist/server.js"]
       }
     }
   }

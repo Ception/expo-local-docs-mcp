@@ -1,15 +1,17 @@
 {
-  "name": "expo-local-mcp",
+  "name": "expo-docs-mcp",
+  "version": "2.0.0",
+  "description": "MCP server for Expo documentation - reads local .mdx files for blazing fast performance",
   "type": "module",
   "scripts": {
     "dev": "bun run src/server.ts",
     "build": "bun build src/server.ts --outdir dist --target node",
-    "start": "bun run dist/server.js"
+    "start": "bun run dist/server.js",
+    "test": "bun run test-server.ts",
+    "clear-cache": "rm -rf .expo-cache"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.20.2",
-    "axios": "^1.7.2",
-    "cheerio": "^1.0.0-rc.12"
+    "@modelcontextprotocol/sdk": "^1.20.2"
   },
   "devDependencies": {
     "@types/node": "^20.14.2",

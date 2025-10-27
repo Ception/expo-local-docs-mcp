@@ -1,55 +1,38 @@
-# Cursor
-.cursor/
-
-# dependencies
+# Dependencies
 node_modules/
+bun.lockb
 
-# Expo
-.expo/
+# Build output
 dist/
-web-build/
-expo-env.d.ts
 
-# Native
-*.orig.*
-*.jks
-*.p8
-*.p12
-*.key
-*.mobileprovision
+# Cache directory (new architecture)
+.expo-cache/
 
-# Metro
-.metro-health-check*
+# Old cache directory (can be deleted)
+expo-docs/
 
-# debug
-npm-debug.*
-yarn-debug.*
-yarn-error.*
-
-# macOS
-.DS_Store
-*.pem
-
-# .env files
+# Environment files
 .env
-.env.*
+.env.local
+.env.*.local
 
-# local env files
-.env*.local
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
-# typescript
-*.tsbuildinfo
+# OS
+.DS_Store
+Thumbs.db
 
-# ignore ios and android folders
-/ios
-/android
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# ignore redis dump
-dump.rdb
-
-# Pem and P12 files and private keys and certificates and CSRs
-*.pem
-*.p12
-*.key
-*.crt
-*.csr
+# Testing
+coverage/
+.nyc_output/

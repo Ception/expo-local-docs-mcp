@@ -5,17 +5,27 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import axios from "axios";
-import * as cheerio from "cheerio";
-import { loadSearchIndex, searchInIndex } from "./searchIndex";
+import {
+  loadSearchIndex,
+  searchInIndex,
+  isIndexReady,
+  setDiskCache,
+  getDocumentByPath,
+  getSections,
+  getDocumentsBySection,
+} from "./searchIndex";
+import { config } from "./config";
+import { DiskCache } from "./diskCache";
 
-const BASE_URL = "http://localhost:3002";
+// Initialize disk cache
+const diskCache = new DiskCache(config.cacheDir, config.cacheMaxAge);
+setDiskCache(diskCache);
 
-// Create a new MCP server
+// Create MCP server
 const server = new Server(
   {
-    name: "expo-local-docs",
-    version: "0.1.0",
+    name: "expo-docs",
+    version: "2.0.0",
   },
   {
     capabilities: {
@@ -24,32 +34,16 @@ const server = new Server(
   }
 );
 
-let indexReady = false;
-
-// Pre-load search index on startup (don't block server startup)
-loadSearchIndex(BASE_URL)
+// Pre-load search index on startup
+const startTime = performance.now();
+loadSearchIndex(config.docsPath)
   .then(() => {
-    indexReady = true;
-    console.error("Search index built successfully");
+    const duration = Math.round(performance.now() - startTime);
+    console.error(`✓ Search index ready in ${duration}ms`);
   })
-  .catch((e: unknown) => {
-    console.error("Failed to build search index – search will be disabled", e);
-    indexReady = false;
+  .catch((error: unknown) => {
+    console.error("Failed to build search index:", error);
   });
-
-// Helper function to extract text from HTML
-function extractTextFromHtml(html: string): string {
-  const $ = cheerio.load(html);
-  // Remove script and style elements
-  $("script, style").remove();
-  // Get text from common content containers
-  const content = $("main, article, .markdown-body, .docs-content, body")
-    .first()
-    .text()
-    .replace(/\s+/g, " ")
-    .trim();
-  return content;
-}
 
 // List available tools
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
@@ -68,12 +62,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
           section: {
             type: "string",
             description:
-              "Documentation section (home, guides, eas, reference, learn, versions)",
-            enum: ["home", "guides", "eas", "reference", "learn", "versions"],
-          },
-          version: {
-            type: "string",
-            description: "SDK version (e.g., latest, v51.0.0, v50.0.0)",
+              "Optional: Filter by documentation section (e.g., 'guides', 'router', 'versions')",
           },
           maxResults: {
             type: "number",
@@ -94,34 +83,23 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
           path: {
             type: "string",
             description:
-              "Path within docs (e.g., 'guides/routing' or '/versions/latest/sdk/camera')",
-          },
-          url: {
-            type: "string",
-            description: "Full URL of the documentation page",
-          },
-          version: {
-            type: "string",
-            description: "SDK version",
+              "Path to the documentation page (e.g., '/guides/routing' or '/versions/v54.0.0/sdk/camera')",
           },
         },
+        required: ["path"],
       },
     },
     {
       name: "list_expo_sections",
-      description: "List all available documentation sections and topics.",
+      description:
+        "List all available documentation sections and their document counts.",
       inputSchema: {
         type: "object",
         properties: {
           section: {
             type: "string",
             description:
-              "Section to list contents for (home, guides, eas, reference, learn, versions)",
-            enum: ["home", "guides", "eas", "reference", "learn", "versions"],
-          },
-          version: {
-            type: "string",
-            description: "SDK version",
+              "Optional: Get documents in a specific section (e.g., 'guides', 'router')",
           },
         },
       },
@@ -134,11 +112,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         properties: {
           module: {
             type: "string",
-            description: "Module name (e.g., 'expo-camera', 'expo-location')",
+            description:
+              "Module name (e.g., 'camera', 'location'). Automatically handles 'expo-' prefix.",
           },
           version: {
             type: "string",
-            description: "SDK version",
+            description: "SDK version (e.g., 'v54.0.0'). Defaults to latest.",
           },
         },
         required: ["module"],
@@ -150,10 +129,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
       inputSchema: {
         type: "object",
         properties: {
-          platform: {
+          topic: {
             type: "string",
-            description: "Target platform",
-            enum: ["ios", "android", "web", "all"],
+            description:
+              "Specific quick start topic (e.g., 'create-a-project', 'start-developing')",
           },
         },
       },
@@ -171,12 +150,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const {
         query,
         section,
-        version,
         maxResults = 10,
       } = args as {
         query: string;
         section?: string;
-        version?: string;
         maxResults?: number;
       };
 
@@ -191,7 +168,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
-      if (!indexReady) {
+      if (!isIndexReady()) {
         return {
           content: [
             {
@@ -206,25 +183,23 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
-      let results = searchInIndex(query.trim(), maxResults);
+      let results = searchInIndex(
+        query.trim(),
+        maxResults || config.maxResults
+      );
 
       // Filter by section if provided
       if (section) {
-        results = results.filter((r) => r.path?.includes(`/${section}/`));
+        results = results.filter((r) =>
+          r.path.toLowerCase().startsWith(`/${section.toLowerCase()}/`)
+        );
       }
 
-      // Filter by version if provided
-      if (version) {
-        const versionPath = `/versions/${version}`;
-        results = results.filter((r) => r.path?.includes(versionPath));
-      }
-
-      const formattedResults = results.map((r: any) => ({
+      const formattedResults = results.map((r) => ({
         title: r.title,
         path: r.path,
-        excerpt:
-          (r.content || "").slice(0, 200) +
-          ((r.content || "").length > 200 ? "…" : ""),
+        description: r.description,
+        excerpt: r.content.slice(0, 250) + (r.content.length > 250 ? "…" : ""),
         score: r.score,
       }));
 
@@ -232,7 +207,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         content: [
           {
             type: "text",
-            text: JSON.stringify({ results: formattedResults }, null, 2),
+            text: JSON.stringify(
+              {
+                query,
+                results: formattedResults,
+                total: formattedResults.length,
+              },
+              null,
+              2
+            ),
           },
         ],
       };
@@ -240,40 +223,55 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
     // Get Expo doc content
     if (name === "get_expo_doc_content") {
-      const { path, url, version } = args as {
-        path?: string;
-        url?: string;
-        version?: string;
-      };
+      const { path } = args as { path: string };
 
-      let docPath = "";
-      if (url) {
-        docPath = url.replace(BASE_URL, "");
-      } else if (path) {
-        docPath = path.startsWith("/") ? path : `/${path}`;
-      } else {
-        throw new Error("path or url is required");
+      if (!path) {
+        throw new Error("path is required");
       }
 
-      // Handle version if provided
-      if (version && !docPath.includes("/versions/")) {
-        docPath = `/versions/${version}${docPath}`;
+      if (!isIndexReady()) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                error: "Search index is not ready yet. Please wait.",
+              }),
+            },
+          ],
+          isError: true,
+        };
       }
 
-      const { data } = await axios.get(`${BASE_URL}${docPath}`);
-      const $ = cheerio.load(data);
+      const doc = getDocumentByPath(path);
 
-      const title = $("h1").first().text().trim() || "Untitled";
-      const htmlContent =
-        $(".markdown-body, .docs-content, main").first().html() || "";
-      const textContent = extractTextFromHtml(htmlContent);
+      if (!doc) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                error: `Document not found at path: ${path}`,
+                suggestion: "Try using search_expo_docs to find the right path",
+              }),
+            },
+          ],
+          isError: true,
+        };
+      }
 
       return {
         content: [
           {
             type: "text",
             text: JSON.stringify(
-              { title, content: textContent, url: `${BASE_URL}${docPath}` },
+              {
+                title: doc.title,
+                description: doc.description,
+                content: doc.content,
+                path: doc.path,
+                frontmatter: doc.frontmatter,
+              },
               null,
               2
             ),
@@ -284,52 +282,64 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
     // List Expo sections
     if (name === "list_expo_sections") {
-      const { section, version } = args as {
-        section?: string;
-        version?: string;
-      };
+      const { section } = args as { section?: string };
 
-      try {
-        let url = BASE_URL;
-        if (version) {
-          url = `${BASE_URL}/versions/${version}`;
-        }
-        if (section) {
-          url = `${url}/${section}`;
-        }
-
-        const { data } = await axios.get(url);
-        const $ = cheerio.load(data);
-
-        // Extract navigation/sidebar links
-        const links: Array<{ text: string; href: string }> = [];
-        $("nav a, .sidebar a, .navigation a").each((_, el) => {
-          const text = $(el).text().trim();
-          const href = $(el).attr("href") || "";
-          if (text && href) {
-            links.push({ text, href });
-          }
-        });
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify({ section, sections: links }, null, 2),
-            },
-          ],
-        };
-      } catch (error: any) {
+      if (!isIndexReady()) {
         return {
           content: [
             {
               type: "text",
               text: JSON.stringify({
-                error: `Failed to list sections: ${error.message}`,
+                error: "Search index is not ready yet. Please wait.",
               }),
             },
           ],
           isError: true,
+        };
+      }
+
+      if (section) {
+        // Get documents in a specific section
+        const docs = getDocumentsBySection(section);
+        const formattedDocs = docs.map((d) => ({
+          title: d.title,
+          path: d.path,
+          description: d.description,
+        }));
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  section,
+                  documents: formattedDocs,
+                  total: formattedDocs.length,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      } else {
+        // List all sections
+        const sections = getSections();
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  sections,
+                  total: sections.length,
+                },
+                null,
+                2
+              ),
+            },
+          ],
         };
       }
     }
@@ -345,114 +355,154 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         throw new Error("module is required");
       }
 
-      const verPath = version ? `/versions/${version}` : "/versions/latest";
-      const apiPath = `${verPath}/sdk/${module.replace("expo-", "")}`;
-
-      try {
-        const { data } = await axios.get(`${BASE_URL}${apiPath}`);
-        const $ = cheerio.load(data);
-
-        const title = $("h1").first().text().trim() || module;
-        const htmlContent =
-          $(".markdown-body, .docs-content, main, article").first().html() ||
-          "";
-        const textContent = extractTextFromHtml(htmlContent);
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify(
-                {
-                  module,
-                  title,
-                  content: textContent,
-                  url: `${BASE_URL}${apiPath}`,
-                },
-                null,
-                2
-              ),
-            },
-          ],
-        };
-      } catch (error: any) {
+      if (!isIndexReady()) {
         return {
           content: [
             {
               type: "text",
               text: JSON.stringify({
-                error: `Failed to fetch API reference: ${error.message}`,
+                error: "Search index is not ready yet. Please wait.",
               }),
             },
           ],
           isError: true,
         };
       }
+
+      // Normalize module name (remove 'expo-' prefix if present)
+      const moduleName = module.replace(/^expo-/, "");
+
+      // Build path
+      const verPath = version || "v54.0.0"; // Default to latest
+      const apiPath = `/versions/${verPath}/sdk/${moduleName}`;
+
+      const doc = getDocumentByPath(apiPath);
+
+      if (!doc) {
+        // Try searching for it
+        const searchResults = searchInIndex(module, 5);
+        const sdkResults = searchResults.filter((r) =>
+          r.path.includes("/sdk/")
+        );
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                error: `API reference not found at: ${apiPath}`,
+                suggestion:
+                  sdkResults.length > 0
+                    ? `Did you mean one of these?\n${sdkResults
+                        .map((r) => `- ${r.title} (${r.path})`)
+                        .join("\n")}`
+                    : "Try using search_expo_docs to find the module",
+                searchResults: sdkResults.slice(0, 3),
+              }),
+            },
+          ],
+          isError: true,
+        };
+      }
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              {
+                module: moduleName,
+                title: doc.title,
+                description: doc.description,
+                content: doc.content,
+                path: doc.path,
+                frontmatter: doc.frontmatter,
+              },
+              null,
+              2
+            ),
+          },
+        ],
+      };
     }
 
     // Get Expo quick start
     if (name === "get_expo_quick_start") {
-      const { platform = "all" } = args as { platform?: string };
+      const { topic } = args as { topic?: string };
 
-      let quickStartPath = "/";
-      if (platform === "ios") {
-        quickStartPath = "/guides/ios";
-      } else if (platform === "android") {
-        quickStartPath = "/guides/android";
-      } else if (platform === "web") {
-        quickStartPath = "/guides/web";
-      }
-
-      try {
-        const { data } = await axios.get(`${BASE_URL}${quickStartPath}`);
-        const $ = cheerio.load(data);
-
-        const title = $("h1").first().text().trim() || "Quick Start";
-        const htmlContent =
-          $(".markdown-body, .docs-content, main, article").first().html() ||
-          "";
-        const textContent = extractTextFromHtml(htmlContent);
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify(
-                {
-                  platform,
-                  title,
-                  content: textContent,
-                  url: `${BASE_URL}${quickStartPath}`,
-                },
-                null,
-                2
-              ),
-            },
-          ],
-        };
-      } catch (error: any) {
+      if (!isIndexReady()) {
         return {
           content: [
             {
               type: "text",
               text: JSON.stringify({
-                error: `Failed to fetch quick start: ${error.message}`,
+                error: "Search index is not ready yet. Please wait.",
               }),
             },
           ],
           isError: true,
         };
       }
+
+      // Default to introduction
+      const quickStartPath = topic
+        ? `/get-started/${topic}`
+        : "/get-started/introduction";
+
+      const doc = getDocumentByPath(quickStartPath);
+
+      if (!doc) {
+        // Get all quick start docs
+        const quickStartDocs = getDocumentsBySection("get-started");
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                error: `Quick start topic not found: ${
+                  topic || "introduction"
+                }`,
+                availableTopics: quickStartDocs.map((d) => ({
+                  title: d.title,
+                  path: d.path,
+                  description: d.description,
+                })),
+              }),
+            },
+          ],
+          isError: true,
+        };
+      }
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              {
+                title: doc.title,
+                description: doc.description,
+                content: doc.content,
+                path: doc.path,
+              },
+              null,
+              2
+            ),
+          },
+        ],
+      };
     }
 
     throw new Error(`Unknown tool: ${name}`);
-  } catch (err: any) {
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
     console.error("Error handling tool request:", err);
     return {
       content: [
         {
           type: "text",
-          text: `Error: ${err.message}`,
+          text: `Error: ${errorMessage}`,
         },
       ],
       isError: true,
@@ -464,7 +514,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("Expo Local Docs MCP server running on stdio");
+  console.error("Expo Docs MCP server running on stdio");
+  console.error(`Docs path: ${config.docsPath}`);
+  console.error(`Cache dir: ${config.cacheDir}`);
 }
 
 main().catch((error) => {

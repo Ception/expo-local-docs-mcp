@@ -12,14 +12,18 @@ import { toolDefinitions } from "./tools/definitions";
 import { handleToolCall } from "./tools/handlers/index";
 
 // Initialize disk cache
-const diskCache = new DiskCache(config.cacheDir, config.cacheMaxAge);
+const diskCache = new DiskCache(
+  config.cacheDir,
+  config.cacheMaxAge,
+  config.version
+);
 setDiskCache(diskCache);
 
 // Create MCP server
 const server = new Server(
   {
     name: "expo-docs",
-    version: "2.0.1",
+    version: config.version,
   },
   {
     capabilities: {

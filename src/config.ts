@@ -1,7 +1,7 @@
 // src/config.ts
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
-import { existsSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { tmpdir } from "os";
 
 export interface ServerConfig {
@@ -9,6 +9,7 @@ export interface ServerConfig {
   cacheDir: string;
   maxResults: number;
   cacheMaxAge: number;
+  version: string;
 }
 
 /**
@@ -50,6 +51,20 @@ function isInstalledPackage(packageRoot: string): boolean {
   return packageRoot.includes("node_modules");
 }
 
+/**
+ * Read version from package.json (single source of truth)
+ */
+function getPackageVersion(packageRoot: string): string {
+  try {
+    const packageJsonPath = resolve(packageRoot, "package.json");
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
+    return packageJson.version || "0.0.0";
+  } catch (error) {
+    console.error("[CONFIG] Failed to read package.json version:", error);
+    return "0.0.0";
+  }
+}
+
 function getConfig(): ServerConfig {
   const packageRoot = getPackageRoot();
   const isNpmInstall = isInstalledPackage(packageRoot);
@@ -78,6 +93,9 @@ function getConfig(): ServerConfig {
       process.env.EXPO_DOCS_CACHE_MAX_AGE || "86400000",
       10
     ),
+
+    // Version from package.json (single source of truth)
+    version: getPackageVersion(packageRoot),
   };
 }
 

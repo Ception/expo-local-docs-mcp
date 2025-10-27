@@ -15,6 +15,7 @@ export interface MDXFrontmatter {
 export interface ParsedMDX {
   frontmatter: MDXFrontmatter;
   content: string;
+  codeBlocks?: string[];
 }
 
 /**
@@ -74,6 +75,28 @@ function parseFrontmatter(content: string): {
 }
 
 /**
+ * Extract code blocks from MDX content
+ */
+function extractCodeBlocks(content: string): string[] {
+  const codeBlockRegex = /```[\w]*[\s\S]*?\n([\s\S]*?)```/g;
+  const blocks: string[] = [];
+  let match;
+
+  while ((match = codeBlockRegex.exec(content)) !== null) {
+    const code = match[1].trim();
+    if (code) {
+      // Filter out MDX component syntax - these are not actual code examples
+      // Real code blocks typically don't start with < or <!--
+      if (!code.startsWith("<") && !code.startsWith("<!--")) {
+        blocks.push(code);
+      }
+    }
+  }
+
+  return blocks;
+}
+
+/**
  * Strip MDX/JSX components and imports to get plain text
  */
 function stripMDX(content: string): string {
@@ -119,10 +142,12 @@ export function parseMDXFile(filePath: string): ParsedMDX {
 
   const { frontmatter, content } = parseFrontmatter(rawContent);
   const cleanedContent = stripMDX(content);
+  const codeBlocks = extractCodeBlocks(content);
 
   return {
     frontmatter,
     content: cleanedContent,
+    codeBlocks,
   };
 }
 

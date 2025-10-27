@@ -54,6 +54,7 @@ export function handleSearchExpoDocs(args: {
     description: r.description,
     excerpt: r.content.slice(0, 250) + (r.content.length > 250 ? "…" : ""),
     score: r.score,
+    codeBlocks: r.codeBlocks,
   }));
 
   return {

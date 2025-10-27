@@ -9,4 +9,5 @@ export interface SearchIndexEntry {
   filePath: string;
   frontmatter: MDXFrontmatter;
   score?: number;
+  codeBlocks?: string[];
 }

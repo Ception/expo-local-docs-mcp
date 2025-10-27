@@ -59,6 +59,7 @@ export function parseMDXFileForIndex(
       title,
       description: parsed.frontmatter.description as string | undefined,
       content: parsed.content,
+      codeBlocks: parsed.codeBlocks,
       path: urlPath,
       filePath,
       frontmatter: parsed.frontmatter,

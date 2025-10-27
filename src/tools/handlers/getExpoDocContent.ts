@@ -52,6 +52,7 @@ export function handleGetExpoDocContent(args: { path: string }): ToolResponse {
             title: doc.title,
             description: doc.description,
             content: doc.content,
+            codeBlocks: doc.codeBlocks,
             path: doc.path,
             frontmatter: doc.frontmatter,
           },

@@ -38,22 +38,52 @@ Complete guide for testing your Expo Docs MCP Server.
 **What it tests:**
 
 - ✓ **Tool 1:** search_expo_docs (3 test cases)
+  - Basic search
+  - Section-filtered search
+  - SDK version search
 - ✓ **Tool 2:** get_expo_doc_content (4 test cases)
+  - Introduction document
+  - SDK document with frontmatter
+  - Router document
+  - Non-existent path (error handling)
 - ✓ **Tool 3:** list_expo_sections (3 test cases)
+  - List all sections
+  - Get documents in specific section (router)
+  - Get documents in specific section (guides)
 - ✓ **Tool 4:** get_expo_api_reference (4 test cases)
+  - Camera API reference
+  - Location API reference
+  - Notifications API reference
+  - Fallback search when exact match not found
 - ✓ **Tool 5:** get_expo_quick_start (3 test cases)
+  - Default quick start (introduction)
+  - Specific topic (create-a-project)
+  - List all quick start topics
 
-**Total:** 18 comprehensive test cases
+**Total:** 17 comprehensive test cases
 
 **Output:**
 
 ```
-🔍 Test 1: search_expo_docs - PASSED
-📄 Test 2: get_expo_doc_content - PASSED
-📚 Test 3: list_expo_sections - PASSED
-📖 Test 4: get_expo_api_reference - PASSED
-🚀 Test 5: get_expo_quick_start - PASSED
-✅ ALL TOOLS PASSED
+✓ Index loaded and ready
+
+🔍 Test 1: search_expo_docs
+   ✅ search_expo_docs: PASSED
+
+📄 Test 2: get_expo_doc_content
+   ✅ get_expo_doc_content: PASSED
+
+📚 Test 3: list_expo_sections
+   ✅ list_expo_sections: PASSED
+
+📖 Test 4: get_expo_api_reference
+   ✅ get_expo_api_reference: PASSED
+
+🚀 Test 5: get_expo_quick_start
+   ✅ get_expo_quick_start: PASSED
+
+✅ ALL TOOLS PASSED - No errors detected!
+🎉 Your MCP server is ready for production use!
 ```
 
 **Use case:** Detailed verification of all MCP tools before deployment.
@@ -64,7 +94,7 @@ Complete guide for testing your Expo Docs MCP Server.
 
 **Run with:** `bun run test:all`
 
-Runs both test suites sequentially. Perfect for pre-deployment validation.
+Runs both test suites sequentially (basic + comprehensive). Perfect for pre-deployment validation.
 
 ---
 
@@ -100,13 +130,14 @@ bun run clear-cache && bun run test
 
 ### test-tools.ts
 
-| Tool                   | Test Cases | What It Verifies                           |
-| ---------------------- | ---------- | ------------------------------------------ |
-| search_expo_docs       | 3          | Search, filtering, SDK search              |
-| get_expo_doc_content   | 4          | Doc retrieval, frontmatter, error handling |
-| list_expo_sections     | 3          | Section listing, filtering                 |
-| get_expo_api_reference | 4          | API lookup, fallback search                |
-| get_expo_quick_start   | 3          | Quick start topics                         |
+| Tool                   | Test Cases | What It Verifies                                   |
+| ---------------------- | ---------- | -------------------------------------------------- |
+| search_expo_docs       | 3          | Basic search, section filtering, SDK search        |
+| get_expo_doc_content   | 4          | Doc retrieval, frontmatter parsing, error handling |
+| list_expo_sections     | 3          | All sections, section-specific document listing    |
+| get_expo_api_reference | 4          | API lookup by module name, fallback search         |
+| get_expo_quick_start   | 3          | Default/specific quick start topics, topic listing |
+| **Total**              | **17**     | **17 comprehensive test cases**                    |
 
 ---
 
@@ -232,14 +263,14 @@ bun run test
 ## 🚀 Pre-Production Checklist
 
 - [ ] `bun run build` completes successfully
-- [ ] `bun run test` passes
-- [ ] `bun run test:tools` passes (18/18 tests)
+- [ ] `bun run test` passes (5 basic tests)
+- [ ] `bun run test:tools` passes (17/17 tests)
 - [ ] Cache file exists: `.expo-cache/search-index.json`
 - [ ] Cache size is ~2.7MB
 - [ ] 958 .mdx files indexed
 - [ ] 38 sections found
 - [ ] MCP config file updated with correct paths
-- [ ] Tested in Cursor/Claude Desktop
+- [ ] Server tested in Cursor/Claude Desktop
 
 ---
 
@@ -247,27 +278,34 @@ bun run test
 
 ```
 Core Functions:
-✓ MDX parsing (frontmatter extraction)
-✓ Search index building
-✓ Cache management
-✓ Document retrieval
-✓ Section listing
+✓ MDX parsing (frontmatter extraction, content stripping)
+✓ Search index building (from files)
+✓ Cache management (load/save/validation)
+✓ Document retrieval (by path)
+✓ Section listing and filtering
 
-MCP Tools:
-✓ search_expo_docs (3 scenarios)
-✓ get_expo_doc_content (4 scenarios)
-✓ list_expo_sections (3 scenarios)
-✓ get_expo_api_reference (4 scenarios)
-✓ get_expo_quick_start (3 scenarios)
+MCP Tools (test-tools.ts):
+✓ search_expo_docs (3 test cases)
+✓ get_expo_doc_content (4 test cases)
+✓ list_expo_sections (3 test cases)
+✓ get_expo_api_reference (4 test cases)
+✓ get_expo_quick_start (3 test cases)
+
+Basic Tests (test-server.ts):
+✓ Index loading (cache + fresh build)
+✓ Section listing (all 38 sections)
+✓ Search functionality (3 queries)
+✓ Document retrieval (3 paths)
+✓ Cache validation
 
 Edge Cases:
-✓ Non-existent paths
-✓ Malformed queries
-✓ Cache expiration
-✓ Missing files
-✓ Empty searches
+✓ Non-existent paths (null handling)
+✓ Empty search queries
+✓ Cache expiration and rebuild
+✓ Missing/malformed .mdx files
+✓ Section filtering
 
-Total Coverage: 18 comprehensive test cases
+Total Coverage: 17 comprehensive tool tests + 5 basic functionality tests
 ```
 
 ---

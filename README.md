@@ -164,21 +164,40 @@ Get quick start documentation.
 ```
 expo-docs-mcp/
 ├── src/
-│   ├── server.ts          # MCP server implementation
-│   ├── searchIndex.ts     # Search index and queries
-│   ├── mdxParser.ts       # MDX file parser (frontmatter + content)
-│   ├── diskCache.ts       # Disk cache management
-│   └── config.ts          # Configuration
-├── expo-sdk/              # Your Expo documentation .mdx files
+│   ├── server.ts              # MCP server implementation
+│   ├── config.ts              # Configuration management
+│   ├── diskCache.ts           # Disk cache management
+│   ├── mdxParser.ts           # MDX file parser (frontmatter + content)
+│   ├── searchIndex/           # Search index module
+│   │   ├── index.ts           # Public API exports
+│   │   ├── types.ts           # TypeScript types
+│   │   ├── state.ts           # Index state management
+│   │   ├── loader.ts          # Index building and loading
+│   │   ├── search.ts          # Search algorithm
+│   │   ├── query.ts           # Document queries
+│   │   └── fileUtils.ts       # File system utilities
+│   └── tools/                 # MCP tool handlers
+│       ├── definitions.ts     # Tool schemas
+│       └── handlers/          # Tool implementations
+│           ├── index.ts       # Handler dispatcher
+│           ├── types.ts       # Handler types
+│           ├── searchExpoDocs.ts
+│           ├── getExpoDocContent.ts
+│           ├── listExpoSections.ts
+│           ├── getExpoApiReference.ts
+│           └── getExpoQuickStart.ts
+├── expo-sdk/                  # Your Expo documentation .mdx files
 │   ├── get-started/
 │   ├── guides/
 │   ├── router/
 │   ├── versions/
 │   └── ...
-├── .expo-cache/           # Generated cache (auto-created)
+├── .expo-cache/               # Generated cache (auto-created)
 │   └── search-index.json
-├── dist/                  # Built server
+├── dist/                      # Built server
 │   └── server.js
+├── test-server.ts             # Basic functionality tests
+├── test-tools.ts              # Comprehensive tool tests
 └── package.json
 ```
 
@@ -245,12 +264,13 @@ bun run clear-cache
 
 ## 📝 How It Works
 
-1. **Startup**: Scans `expo-sdk/` recursively for all `.mdx` files (958 files)
-2. **Parsing**: Extracts YAML frontmatter and content from each file
-3. **Indexing**: Builds in-memory search index with path mapping (~78ms)
-4. **Caching**: Saves index to `search-index.json` (~2.7MB)
-5. **Subsequent Runs**: Loads from cache in ~3ms
-6. **Search**: Uses intelligent scoring (title > description > content)
+1. **Startup**: Server initializes and attempts to load from disk cache
+2. **Cache Check**: If valid cache exists (<24h old, correct version), loads in ~3ms
+3. **Fresh Build**: If no cache, scans `expo-sdk/` recursively for all `.mdx` files (958 files)
+4. **Parsing**: Extracts YAML frontmatter and strips MDX/JSX to get clean text content
+5. **Indexing**: Builds in-memory search index with path mapping (~78ms)
+6. **Caching**: Saves complete index to `search-index.json` (~2.7MB)
+7. **Search**: Uses optimized scoring algorithm (exact matches > word matches)
 
 ### MDX Parsing
 
@@ -267,16 +287,30 @@ platforms: ["android", "ios", "web"]
 
 This metadata is used for better search results and filtering.
 
-### Search Scoring
+### Search Scoring Algorithm
 
-- **Exact phrase in title**: 1000 points
-- **Exact phrase in description**: 500 points
-- **Exact phrase in path**: 300 points
-- **Exact phrase in content**: 100 points
-- **Word match in title**: 50 points per word
-- **Word match in description**: 25 points per word
-- **Word match in path**: 15 points per word
-- **Word match in content**: 1 point per word
+The search uses a dual-layer scoring system for maximum relevance:
+
+**Exact Phrase Matches:**
+
+- Title contains exact query: **1000 points**
+- Description contains exact query: **500 points**
+- Path contains exact query: **300 points**
+- Content contains exact query: **100 points**
+
+**Individual Word Matches (with boundary detection):**
+
+- Word match in title: **50 points** per occurrence
+- Word match in description: **25 points** per occurrence
+- Word match in path: **15 points** per occurrence
+- Word match in content: **1 point** per occurrence
+
+**Performance Optimizations:**
+
+- Pre-compiles regex patterns for each search word
+- Uses `for...of` loop instead of `.map()` for better performance
+- Only creates scored objects for entries with matches (score > 0)
+- Single-pass algorithm with early filtering
 
 ## 🔄 Updating Documentation
 

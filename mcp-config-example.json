@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "expo-docs": {
+      "command": "bun",
+      "args": ["/<workingdirectory>/expo-local-mcp/dist/server.js"],
+      "env": {
+        "EXPO_DOCS_PATH": "/<workingdirectory>/expo-local-mcp/expo-sdk",
+        "EXPO_CACHE_DIR": "/<workingdirectory>/expo-local-mcp/.expo-cache"
+      }
+    }
+  }
+}

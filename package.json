@@ -8,6 +8,8 @@
     "build": "bun build src/server.ts --outdir dist --target node",
     "start": "bun run dist/server.js",
     "test": "bun run test-server.ts",
+    "test:tools": "bun run test-tools.ts",
+    "test:all": "bun run test-server.ts && bun run test-tools.ts",
     "clear-cache": "rm -rf .expo-cache"
   },
   "dependencies": {

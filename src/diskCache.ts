@@ -12,7 +12,7 @@ interface CachedSearchIndex {
 export class DiskCache {
   private maxAge: number;
   private baseDir: string;
-  private readonly CACHE_VERSION = "2.0.0"; // Increment when cache format changes
+  private readonly CACHE_VERSION = "2.0.1"; // Increment when cache format changes
 
   constructor(baseDir: string, maxAge: number = 86400000) {
     this.maxAge = maxAge;

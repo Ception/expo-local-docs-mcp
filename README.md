@@ -59,10 +59,10 @@ Add to your Cursor MCP configuration (`~/.cursor/mcp.json` or `~/.config/cursor/
   "mcpServers": {
     "expo-docs": {
       "command": "bun",
-      "args": ["/Users/x./Documents/repos/mcps/expo-local-mcp/dist/server.js"],
+      "args": ["/<workingdirectory>/expo-local-mcp/dist/server.js"],
       "env": {
-        "EXPO_DOCS_PATH": "/Users/x./Documents/repos/mcps/expo-local-mcp/expo-sdk",
-        "EXPO_CACHE_DIR": "/Users/x./Documents/repos/mcps/expo-local-mcp/.expo-cache"
+        "EXPO_DOCS_PATH": "/<workingdirectory>/expo-local-mcp/expo-sdk",
+        "EXPO_CACHE_DIR": "/<workingdirectory>/expo-local-mcp/.expo-cache"
       }
     }
   }

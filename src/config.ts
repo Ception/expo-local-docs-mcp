@@ -8,7 +8,7 @@ export interface ServerConfig {
   cacheMaxAge: number;
 }
 
-export function getConfig(): ServerConfig {
+function getConfig(): ServerConfig {
   return {
     // Path to the expo-sdk folder containing .mdx files
     docsPath: resolve(process.env.EXPO_DOCS_PATH || "./expo-sdk"),

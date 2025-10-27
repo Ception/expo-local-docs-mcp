@@ -49,19 +49,23 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
   try {
-    return handleToolCall(name, args) as any;
+    const response = handleToolCall(name, args);
+    return {
+      content: response.content,
+      isError: response.isError,
+    };
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : String(err);
     console.error("Error handling tool request:", err);
     return {
       content: [
         {
-          type: "text",
+          type: "text" as const,
           text: `Error: ${errorMessage}`,
         },
       ],
       isError: true,
-    } as any;
+    };
   }
 });
 

@@ -12,6 +12,9 @@ export function searchInIndex(query: string, max = 20): SearchIndexEntry[] {
   const words = normalizedQuery.split(/\s+/).filter(Boolean);
   const index = getIndex();
 
+  // Pre-compile regex patterns for better performance
+  const wordRegexes = words.map((word) => new RegExp(`\\b${word}\\b`, "gi"));
+
   return index
     .map((entry): SearchIndexEntry => {
       const title = entry.title.toLowerCase();
@@ -21,45 +24,20 @@ export function searchInIndex(query: string, max = 20): SearchIndexEntry[] {
 
       let score = 0;
 
-      // Exact phrase match in title (highest priority)
-      if (title.includes(normalizedQuery)) {
-        score += 1000;
-      }
+      // Exact phrase matches
+      if (title.includes(normalizedQuery)) score += 1000;
+      if (description.includes(normalizedQuery)) score += 500;
+      if (path.includes(normalizedQuery)) score += 300;
+      if (content.includes(normalizedQuery)) score += 100;
 
-      // Exact phrase match in description
-      if (description.includes(normalizedQuery)) {
-        score += 500;
-      }
+      // Individual word matches using pre-compiled regexes
+      for (let i = 0; i < words.length; i++) {
+        const wordRegex = wordRegexes[i];
 
-      // Exact phrase match in path
-      if (path.includes(normalizedQuery)) {
-        score += 300;
-      }
-
-      // Exact phrase match in content
-      if (content.includes(normalizedQuery)) {
-        score += 100;
-      }
-
-      // Individual word matches
-      for (const word of words) {
-        const wordRegex = new RegExp(`\\b${word}\\b`, "gi");
-
-        // Title matches worth 50 points each
-        const titleMatches = (title.match(wordRegex) || []).length;
-        score += titleMatches * 50;
-
-        // Description matches worth 25 points each
-        const descMatches = (description.match(wordRegex) || []).length;
-        score += descMatches * 25;
-
-        // Path matches worth 15 points each
-        const pathMatches = (path.match(wordRegex) || []).length;
-        score += pathMatches * 15;
-
-        // Content matches worth 1 point each
-        const contentMatches = (content.match(wordRegex) || []).length;
-        score += contentMatches * 1;
+        score += (title.match(wordRegex) || []).length * 50;
+        score += (description.match(wordRegex) || []).length * 25;
+        score += (path.match(wordRegex) || []).length * 15;
+        score += (content.match(wordRegex) || []).length * 1;
       }
 
       return { ...entry, score };

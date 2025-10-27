@@ -23,12 +23,33 @@ A blazing-fast MCP (Model Context Protocol) server for Expo documentation that r
 
 ## 🛠️ Setup
 
-### Prerequisites
+### Quick Start (Recommended)
+
+**Zero configuration required!** Just add to your Cursor MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "expo-docs": {
+      "command": "npx",
+      "args": ["expo-local-docs-mcp"]
+    }
+  }
+}
+```
+
+That's it! The package includes all 958 Expo SDK docs and works out of the box.
+
+### Alternative: Local Development
+
+If you want to contribute or customize:
+
+#### Prerequisites
 
 - [Bun](https://bun.sh) installed (recommended) or Node.js
 - Expo documentation `.mdx` files in the `expo-sdk/` folder
 
-### Installation
+#### Installation
 
 ```bash
 cd /Users/x./Documents/repos/mcps/expo-local-mcp
@@ -36,7 +57,7 @@ bun install
 bun run build
 ```
 
-### Test It Works
+#### Test It Works
 
 ```bash
 bun run test
@@ -50,7 +71,7 @@ You should see:
 ✓ Search index loaded: 958 entries in 3ms (cached)
 ```
 
-### Configuration
+#### Configuration for Local Development
 
 Add to your Cursor MCP configuration (`~/.cursor/mcp.json` or `~/.config/cursor/mcp.json`):
 
@@ -162,7 +183,7 @@ Get quick start documentation.
 ## 🏗️ Architecture
 
 ```
-expo-docs-mcp/
+expo-local-docs-mcp/
 ├── src/
 │   ├── server.ts              # MCP server implementation
 │   ├── config.ts              # Configuration management
@@ -324,20 +345,23 @@ The index will automatically rebuild on next startup.
 
 ## ❓ FAQ
 
+**Q: How do I test npx execution?**  
+A: Run `npx expo-local-docs-mcp` directly in your terminal. It should start the MCP server on stdio.
+
 **Q: Do I need the localhost:3002 server running?**  
 A: No! That was the old v1.x architecture. v2.0 reads files directly.
 
 **Q: Can I delete the `.expo-cache` folder?**  
-A: Yes! It will automatically rebuild (takes ~78ms first time).
+A: Yes! It will automatically rebuild (takes ~78ms first time). When using npx, cache is stored in the package installation directory.
 
 **Q: What happens if an .mdx file is missing?**  
 A: The server gracefully skips it and continues indexing other files.
 
 **Q: Can I use this with Node.js instead of Bun?**  
-A: Yes, but Bun is recommended for better performance. Change `command: "bun"` to `command: "node"` in your MCP config.
+A: Yes! The npm package is built to work with Node.js. Local development can use either Bun or Node.
 
-**Q: Can I delete `.pnpm-store` or `pnpm-lock.yaml`?**  
-A: Yes! This project uses Bun now. The old pnpm files are obsolete.
+**Q: How big is the npm package?**  
+A: ~4-5MB including all 958 Expo SDK docs. First startup takes ~78ms to build the search index.
 
 ## 📈 Indexed Content
 

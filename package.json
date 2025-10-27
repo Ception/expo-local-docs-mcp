@@ -37,12 +37,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ception/expo-local-docs.git"
+    "url": "https://github.com/ception/expo-local-docs-mcp.git"
   },
   "bugs": {
-    "url": "https://github.com/ception/expo-local-docs/issues"
+    "url": "https://github.com/ception/expo-local-docs-mcp/issues"
   },
-  "homepage": "https://github.com/ception/expo-local-docs#readme",
+  "homepage": "https://github.com/ception/expo-local-docs-mcp#readme",
   "engines": {
     "node": ">=18.0.0"
   },

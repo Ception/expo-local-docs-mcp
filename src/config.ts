@@ -2,6 +2,7 @@
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 import { existsSync } from "fs";
+import { tmpdir } from "os";
 
 export interface ServerConfig {
   docsPath: string;
@@ -42,8 +43,16 @@ function getPackageRoot(): string {
   return process.cwd();
 }
 
+/**
+ * Detect if we're running from node_modules (npm/npx install)
+ */
+function isInstalledPackage(packageRoot: string): boolean {
+  return packageRoot.includes("node_modules");
+}
+
 function getConfig(): ServerConfig {
   const packageRoot = getPackageRoot();
+  const isNpmInstall = isInstalledPackage(packageRoot);
 
   return {
     // Path to the expo-sdk folder containing .mdx files
@@ -53,9 +62,12 @@ function getConfig(): ServerConfig {
       : resolve(packageRoot, "expo-sdk"),
 
     // Cache directory for search index
-    // Use OS temp dir for npm installations, local for development
+    // For npm/npx installs: use OS temp dir (writable and persistent across sessions)
+    // For local dev: use .expo-cache in project root
     cacheDir: process.env.EXPO_CACHE_DIR
       ? resolve(process.env.EXPO_CACHE_DIR)
+      : isNpmInstall
+      ? resolve(tmpdir(), "expo-local-docs-mcp-cache")
       : resolve(packageRoot, ".expo-cache"),
 
     // Maximum search results to return

@@ -23,9 +23,11 @@ A blazing-fast MCP (Model Context Protocol) server for Expo documentation that r
 
 ## 🛠️ Setup
 
-### Quick Start (Recommended)
+Choose your preferred installation method:
 
-**Zero configuration required!** Just add to your Cursor MCP configuration:
+### Option 1: npx (Zero Install)
+
+No installation needed! Just add to your Cursor MCP configuration:
 
 ```json
 {
@@ -38,9 +40,69 @@ A blazing-fast MCP (Model Context Protocol) server for Expo documentation that r
 }
 ```
 
-That's it! The package includes all 958 Expo SDK docs and works out of the box.
+✅ Always uses latest version  
+✅ No manual updates needed  
+⚠️ Slight delay on first run (cached after)
 
-### Alternative: Local Development
+### Option 2: Global Install (Recommended)
+
+Install once, use everywhere:
+
+```bash
+npm install -g expo-local-docs-mcp
+# or with pnpm
+pnpm install -g expo-local-docs-mcp
+```
+
+Then add to your Cursor MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "expo-docs": {
+      "command": "expo-local-docs-mcp"
+    }
+  }
+}
+```
+
+✅ Instant startup (no download)  
+✅ Cleaner config  
+⚠️ Manual updates: `npm update -g expo-local-docs-mcp`
+
+### Option 3: Local Project Install
+
+Install in your project:
+
+```bash
+cd ~/my-expo-project
+npm install expo-local-docs-mcp
+```
+
+Then add to your Cursor MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "expo-docs": {
+      "command": "node",
+      "args": [
+        "/absolute/path/to/node_modules/expo-local-docs-mcp/dist/server.js"
+      ]
+    }
+  }
+}
+```
+
+✅ Version locked to project  
+⚠️ Must install per project  
+⚠️ Need absolute path in config
+
+---
+
+That's it! The package includes all 958 Expo SDK docs and works out of the box with any method.
+
+### For Contributors: Local Development
 
 If you want to contribute or customize:
 
@@ -345,14 +407,27 @@ The index will automatically rebuild on next startup.
 
 ## ❓ FAQ
 
+**Q: Should I use npx or install globally?**  
+A: Global install (`npm install -g`) is recommended for faster startup and cleaner config. Use npx if you want automatic updates.
+
+**Q: How do I update to the latest version?**  
+A:
+
+- **npx**: Automatic (always uses latest)
+- **Global**: `npm update -g expo-local-docs-mcp`
+- **Local**: `npm update expo-local-docs-mcp` in your project
+
 **Q: How do I test npx execution?**  
 A: Run `npx expo-local-docs-mcp` directly in your terminal. It should start the MCP server on stdio.
 
 **Q: Do I need the localhost:3002 server running?**  
 A: No! That was the old v1.x architecture. v2.0 reads files directly.
 
-**Q: Can I delete the `.expo-cache` folder?**  
-A: Yes! It will automatically rebuild (takes ~78ms first time). When using npx, cache is stored in the package installation directory.
+**Q: Can I delete the cache folder?**  
+A: Yes! It will automatically rebuild (takes ~78ms). Cache locations:
+
+- **npm/npx**: `/tmp/expo-local-docs-mcp-cache/` (macOS/Linux)
+- **Local dev**: `.expo-cache/` (project root)
 
 **Q: What happens if an .mdx file is missing?**  
 A: The server gracefully skips it and continues indexing other files.

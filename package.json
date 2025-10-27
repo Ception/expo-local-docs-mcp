@@ -1,16 +1,50 @@
 {
-  "name": "expo-docs-mcp",
+  "name": "expo-local-docs-mcp",
   "version": "2.0.0",
-  "description": "MCP server for Expo documentation - reads local .mdx files for blazing fast performance",
+  "description": "MCP server for Expo documentation - reads local .mdx files for blazing fast performance. Works out of the box with zero configuration.",
   "type": "module",
+  "bin": {
+    "expo-local-docs-mcp": "./dist/server.js"
+  },
+  "files": [
+    "dist/",
+    "expo-sdk/",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "dev": "bun run src/server.ts",
-    "build": "bun build src/server.ts --outdir dist --target node",
+    "build": "bun build src/server.ts --outdir dist --target node && node scripts/add-shebang.js",
     "start": "bun run dist/server.js",
     "test": "bun run test-server.ts",
     "test:tools": "bun run test-tools.ts",
     "test:all": "bun run test-server.ts && bun run test-tools.ts",
-    "clear-cache": "rm -rf .expo-cache"
+    "clear-cache": "rm -rf .expo-cache",
+    "prepublishOnly": "npm run build && npm run test"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "expo",
+    "documentation",
+    "docs",
+    "react-native",
+    "ai",
+    "llm",
+    "cursor"
+  ],
+  "author": "Ception contact@aleksmanov.me",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ception/expo-local-docs-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ception/expo-local-docs-mcp/issues"
+  },
+  "homepage": "https://github.com/ception/expo-local-docs-mcp#readme",
+  "engines": {
+    "node": ">=18.0.0"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.20.2"

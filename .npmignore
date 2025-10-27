@@ -1,0 +1,27 @@
+# Source files - not needed in npm package
+src/
+*.ts
+!*.d.ts
+
+# Development files
+test-server.ts
+test-tools.ts
+TESTING.md
+mcp-config-example.json
+
+# Build artifacts that shouldn't be published
+.expo-cache/
+bun.lockb
+
+# Development tools
+.vscode/
+.idea/
+*.swp
+
+# CI/CD
+.github/
+scripts/
+
+# OS
+.DS_Store
+

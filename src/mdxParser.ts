@@ -15,7 +15,6 @@ export interface MDXFrontmatter {
 export interface ParsedMDX {
   frontmatter: MDXFrontmatter;
   content: string;
-  rawContent: string;
 }
 
 /**
@@ -124,7 +123,6 @@ export function parseMDXFile(filePath: string): ParsedMDX {
   return {
     frontmatter,
     content: cleanedContent,
-    rawContent,
   };
 }
 

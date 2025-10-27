@@ -268,8 +268,3 @@ export function getIndexSize(): number {
 export function isIndexReady(): boolean {
   return indexLoaded && index.length > 0;
 }
-
-export function clearIndex(): void {
-  index = [];
-  indexLoaded = false;
-}

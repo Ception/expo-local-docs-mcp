@@ -101,22 +101,6 @@ export class DiskCache {
   }
 
   /**
-   * Clear the cache
-   */
-  clear(): void {
-    try {
-      const indexPath = this.getIndexPath();
-      if (existsSync(indexPath)) {
-        const { unlinkSync } = require("fs");
-        unlinkSync(indexPath);
-        console.error("[DISK CACHE] Cleared cache");
-      }
-    } catch (error) {
-      console.error("[DISK CACHE] Failed to clear cache:", error);
-    }
-  }
-
-  /**
    * Check if cache exists and is valid
    */
   isValid(): boolean {

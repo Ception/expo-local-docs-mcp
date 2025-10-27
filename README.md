@@ -132,7 +132,7 @@ Get API reference for a specific Expo SDK module.
 **Parameters:**
 
 - `module` (string, required): Module name (e.g., 'camera', 'expo-camera')
-- `version` (string, optional): SDK version (default: v54.0.0)
+- `version` (string, optional): SDK version (default: latest)
 
 **Example:**
 

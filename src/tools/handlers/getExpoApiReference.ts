@@ -37,7 +37,7 @@ export function handleGetExpoApiReference(args: {
   const moduleName = module.replace(/^expo-/, "");
 
   // Build path
-  const verPath = version || "v54.0.0"; // Default to latest
+  const verPath = version || "latest"; // Default to latest
   const apiPath = `/versions/${verPath}/sdk/${moduleName}`;
 
   const doc = getDocumentByPath(apiPath);

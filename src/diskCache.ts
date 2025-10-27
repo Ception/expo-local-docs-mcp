@@ -1,7 +1,7 @@
 // src/diskCache.ts
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
-import type { SearchIndexEntry } from "./searchIndex";
+import type { SearchIndexEntry } from "./searchIndex/types";
 
 interface CachedSearchIndex {
   entries: SearchIndexEntry[];

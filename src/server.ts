@@ -5,7 +5,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { loadSearchIndex, setDiskCache } from "./searchIndex";
+import { loadSearchIndex, setDiskCache } from "./searchIndex/index";
 import { config } from "./config";
 import { DiskCache } from "./diskCache";
 import { toolDefinitions } from "./tools/definitions";

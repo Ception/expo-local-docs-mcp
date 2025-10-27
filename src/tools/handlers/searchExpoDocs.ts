@@ -1,5 +1,5 @@
 // src/tools/handlers/searchExpoDocs.ts
-import { searchInIndex, isIndexReady } from "../../searchIndex";
+import { searchInIndex, isIndexReady } from "../../searchIndex/index";
 import { config } from "../../config";
 import type { ToolResponse } from "./types";
 

@@ -5,10 +5,10 @@ import {
   getDocumentByPath,
   getSections,
   getDocumentsBySection,
-} from "./src/searchIndex";
+  setDiskCache,
+} from "./src/searchIndex/index";
 import { config } from "./src/config";
 import { DiskCache } from "./src/diskCache";
-import { setDiskCache } from "./src/searchIndex";
 
 // Initialize cache
 const diskCache = new DiskCache(config.cacheDir, config.cacheMaxAge);

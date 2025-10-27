@@ -3,7 +3,7 @@ import {
   isIndexReady,
   getSections,
   getDocumentsBySection,
-} from "../../searchIndex";
+} from "../../searchIndex/index";
 import type { ToolResponse } from "./types";
 
 /**

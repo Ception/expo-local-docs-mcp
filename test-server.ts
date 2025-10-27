@@ -5,10 +5,10 @@ import {
   getIndexSize,
   getSections,
   getDocumentByPath,
-} from "./src/searchIndex";
+  setDiskCache,
+} from "./src/searchIndex/index";
 import { config } from "./src/config";
 import { DiskCache } from "./src/diskCache";
-import { setDiskCache } from "./src/searchIndex";
 
 async function testServer() {
   console.log("🧪 Testing Expo Docs MCP Server v2.0\n");

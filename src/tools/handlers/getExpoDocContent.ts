@@ -1,5 +1,5 @@
 // src/tools/handlers/getExpoDocContent.ts
-import { isIndexReady, getDocumentByPath } from "../../searchIndex";
+import { isIndexReady, getDocumentByPath } from "../../searchIndex/index";
 import type { ToolResponse } from "./types";
 
 /**

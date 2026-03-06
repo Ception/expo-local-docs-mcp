@@ -6,6 +6,45 @@ import {
 } from "../../searchIndex/index";
 import type { ToolResponse } from "./types";
 
+function normalizeVersion(version?: string): string {
+  const trimmed = version?.trim();
+  if (!trimmed) {
+    return "latest";
+  }
+
+  if (trimmed.toLowerCase() === "latest") {
+    return "latest";
+  }
+
+  if (/^v\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  if (/^\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?$/.test(trimmed)) {
+    return `v${trimmed}`;
+  }
+
+  return trimmed;
+}
+
+function normalizeModuleCandidates(module: string): string[] {
+  const normalizedInput = module.trim().toLowerCase();
+
+  const packageLeaf = normalizedInput.includes("/")
+    ? normalizedInput.split("/").at(-1) || normalizedInput
+    : normalizedInput;
+
+  const baseModule = packageLeaf.replace(/^expo-/, "");
+
+  const candidates = [
+    baseModule,
+    baseModule.replace(/_/g, "-"),
+    baseModule.replace(/-/g, ""),
+  ];
+
+  return Array.from(new Set(candidates.filter(Boolean)));
+}
+
 /**
  * Handle get_expo_api_reference tool
  */
@@ -33,14 +72,23 @@ export function handleGetExpoApiReference(args: {
     };
   }
 
-  // Normalize module name (remove 'expo-' prefix if present)
-  const moduleName = module.replace(/^expo-/, "");
+  const verPath = normalizeVersion(version);
+  const moduleCandidates = normalizeModuleCandidates(module);
+  const attemptedPaths = moduleCandidates.map(
+    (candidate) => `/versions/${verPath}/sdk/${candidate}`
+  );
 
-  // Build path
-  const verPath = version || "latest"; // Default to latest
-  const apiPath = `/versions/${verPath}/sdk/${moduleName}`;
+  let doc = null;
+  let resolvedModule = moduleCandidates[0];
 
-  const doc = getDocumentByPath(apiPath);
+  for (let i = 0; i < attemptedPaths.length; i++) {
+    const candidateDoc = getDocumentByPath(attemptedPaths[i]);
+    if (candidateDoc) {
+      doc = candidateDoc;
+      resolvedModule = moduleCandidates[i];
+      break;
+    }
+  }
 
   if (!doc) {
     // Try searching for it
@@ -52,7 +100,8 @@ export function handleGetExpoApiReference(args: {
         {
           type: "text",
           text: JSON.stringify({
-            error: `API reference not found at: ${apiPath}`,
+            error: `API reference not found for module: ${module}`,
+            attemptedPaths,
             suggestion:
               sdkResults.length > 0
                 ? `Did you mean one of these?\n${sdkResults
@@ -73,7 +122,7 @@ export function handleGetExpoApiReference(args: {
         type: "text",
         text: JSON.stringify(
           {
-            module: moduleName,
+            module: resolvedModule,
             title: doc.title,
             description: doc.description,
             content: doc.content,

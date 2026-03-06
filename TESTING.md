@@ -13,9 +13,9 @@ Complete guide for testing your Expo Docs MCP Server.
 **What it tests:**
 
 - ✓ Index loading (from cache or fresh build)
-- ✓ Section listing (all 38 sections)
+- ✓ Section listing (all indexed sections, currently 40)
 - ✓ Search functionality (3 different queries)
-- ✓ Document retrieval (3 different paths)
+- ✓ Document retrieval (4 different paths, including `/versions/latest` alias)
 - ✓ Cache validation
 
 **Output:**
@@ -23,10 +23,10 @@ Complete guide for testing your Expo Docs MCP Server.
 ```
 🧪 Basic Functionality Tests
 
-✓ Index loaded: 958 entries (3ms)
-✓ Sections found: 38
+✓ Index loaded: 997 entries (time depends on cache state)
+✓ Sections found: 40
 ✓ Search queries: 3/3 passed
-✓ Document retrieval: 3/3 passed
+✓ Document retrieval: 4/4 passed
 ✓ Cache validation: valid
 
 ✅ All basic tests passed!
@@ -42,30 +42,41 @@ Complete guide for testing your Expo Docs MCP Server.
 
 **What it tests:**
 
-- ✓ **Tool 1:** search_expo_docs (3 test cases)
+- ✓ `search_expo_docs` (5 test cases)
   - Basic search
   - Section-filtered search
   - SDK version search
-- ✓ **Tool 2:** get_expo_doc_content (4 test cases)
+  - Section filtering before max result limiting
+  - Special-character query handling (`[`, `(`, `C++`)
+- ✓ `get_expo_doc_content` (6 test cases)
   - Introduction document
-  - SDK document with frontmatter
+  - SDK document with explicit version path
+  - `latest` alias resolution
+  - Legacy version path resolution
   - Router document
   - Non-existent path (error handling)
-- ✓ **Tool 3:** list_expo_sections (3 test cases)
+- ✓ `mdx_parser` (1 test case)
+  - JSX-leading fenced code blocks are preserved
+- ✓ `disk_cache_fingerprint` (1 test case)
+  - Fingerprint-aware cache validation
+- ✓ `list_expo_sections` (3 test cases)
   - List all sections
   - Get documents in specific section (router)
   - Get documents in specific section (guides)
-- ✓ **Tool 4:** get_expo_api_reference (4 test cases)
+- ✓ `get_expo_api_reference` (7 test cases)
   - Camera API reference
   - Location API reference
   - Notifications API reference
+  - `latest` alias resolution
+  - Package-style module name lookup
+  - Numeric version input normalization
   - Fallback search when exact match not found
-- ✓ **Tool 5:** get_expo_quick_start (3 test cases)
+- ✓ `get_expo_quick_start` (3 test cases)
   - Default quick start (introduction)
   - Specific topic (create-a-project)
   - List all quick start topics
 
-**Total:** 17 comprehensive test cases
+**Total:** 26 comprehensive tool checks
 
 **Output:**
 
@@ -78,12 +89,22 @@ Complete guide for testing your Expo Docs MCP Server.
   ✓ Basic search
   ✓ Section-filtered search
   ✓ SDK search
+  ✓ Section filtering happens before max limit
+  ✓ Special-character query handling
 
 📄 get_expo_doc_content
   ✓ Get introduction doc
-  ✓ Get SDK doc with frontmatter
+  ✓ Get SDK doc with explicit v55 path
+  ✓ Resolve latest alias to v55 doc
+  ✓ Legacy v54 path still resolves
   ✓ Get router doc
   ✓ Non-existent path handling
+
+🧩 mdx_parser
+  ✓ JSX-leading code blocks are preserved
+
+🗂️ disk_cache_fingerprint
+  ✓ Fingerprint-aware cache validation
 
 📚 list_expo_sections
   ✓ List all sections
@@ -94,6 +115,9 @@ Complete guide for testing your Expo Docs MCP Server.
   ✓ Get camera API
   ✓ Get location API
   ✓ Get notifications API
+  ✓ latest alias resolves to v55 API
+  ✓ Package-style module names resolve
+  ✓ Numeric version input resolves
   ✓ Fallback search for modules
 
 🚀 get_expo_quick_start
@@ -138,24 +162,26 @@ bun run clear-cache && bun run test
 
 ### test-server.ts
 
-| Test               | What It Checks         | Expected Result           |
-| ------------------ | ---------------------- | ------------------------- |
-| Index Loading      | Cache loads correctly  | 958 entries in 3ms        |
-| Section Listing    | All sections found     | 38 sections               |
-| Search             | Queries return results | 3 queries, all successful |
-| Document Retrieval | Specific docs found    | 3 paths, all found        |
-| Cache Validation   | Cache is valid         | ✓ Valid                   |
+| Test               | What It Checks             | Expected Result                              |
+| ------------------ | -------------------------- | -------------------------------------------- |
+| Index Loading      | Cache/fresh load path      | Index contains docs (currently ~997 entries) |
+| Section Listing    | Sections are discoverable  | Non-empty section list (currently ~40)       |
+| Search             | Queries return results     | 3 queries, all successful                    |
+| Document Retrieval | Specific docs found        | 4 paths, all found                           |
+| Cache Validation   | Cache is valid after index | ✓ Valid                                      |
 
 ### test-tools.ts
 
-| Tool                   | Test Cases | What It Verifies                                   |
-| ---------------------- | ---------- | -------------------------------------------------- |
-| search_expo_docs       | 3          | Basic search, section filtering, SDK search        |
-| get_expo_doc_content   | 4          | Doc retrieval, frontmatter parsing, error handling |
-| list_expo_sections     | 3          | All sections, section-specific document listing    |
-| get_expo_api_reference | 4          | API lookup by module name, fallback search         |
-| get_expo_quick_start   | 3          | Default/specific quick start topics, topic listing |
-| **Total**              | **17**     | **17 comprehensive test cases**                    |
+| Tool / Area            | Checks | What It Verifies                                                     |
+| ---------------------- | ------ | -------------------------------------------------------------------- |
+| search_expo_docs       | 5      | Search relevance, section filtering, ordering-before-limit, regex safety |
+| get_expo_doc_content   | 6      | Path lookup, latest alias, legacy version, error handling           |
+| mdx_parser             | 1      | JSX-leading code fence preservation                                  |
+| disk_cache_fingerprint | 1      | Fingerprint-aware cache validity                                     |
+| list_expo_sections     | 3      | All sections, section-specific document listing                      |
+| get_expo_api_reference | 7      | API lookup, aliasing, package names, numeric versions, fallback      |
+| get_expo_quick_start   | 3      | Default/specific quick start topics, topic listing                   |
+| **Total**              | **26** | **26 comprehensive tool checks**                                     |
 
 ---
 
@@ -220,9 +246,9 @@ Look for the error details and check:
 
 ### Expected Performance
 
-- **First run** (no cache): 70-80ms
-- **Cached run**: 3-5ms
-- **Search query**: 5-10ms
+- **First run** (no cache): ~90-120ms
+- **Cached run** (disk cache): ~12-20ms
+- **Search query**: ~1-10ms
 - **Document retrieval**: <1ms (in-memory)
 
 ### If Performance is Slow
@@ -237,7 +263,7 @@ bun run test
 
 # Check file count
 find expo-sdk -name "*.mdx" | wc -l
-# Should show: 958
+# Should show: 997 (for current docs snapshot)
 ```
 
 ---
@@ -259,7 +285,7 @@ bun run test  # Will use cache (faster)
 
 ### Issue: Cache always rebuilding
 
-**Cause:** Cache might be >24 hours old or corrupted.
+**Cause:** Cache might be >24 hours old, version-mismatched, fingerprint-mismatched, or corrupted.
 **Solution:**
 
 ```bash
@@ -282,11 +308,11 @@ bun run test
 
 - [ ] `bun run build` completes successfully
 - [ ] `bun run test` passes (5 basic tests)
-- [ ] `bun run test:tools` passes (17/17 tests)
+- [ ] `bun run test:tools` passes (all comprehensive checks)
 - [ ] Cache file exists: `.expo-cache/search-index.json`
-- [ ] Cache size is ~2.7MB
-- [ ] 958 .mdx files indexed
-- [ ] 38 sections found
+- [ ] Cache size is approximately 4-5MB (current snapshot ~4.4MB)
+- [ ] 997 .mdx files indexed (for current snapshot)
+- [ ] 40 sections found (for current snapshot)
 - [ ] MCP config file updated with correct paths
 - [ ] Server tested in Cursor/Claude Desktop
 
@@ -297,33 +323,38 @@ bun run test
 ```
 Core Functions:
 ✓ MDX parsing (frontmatter extraction, content stripping)
+✓ MDX code block extraction (including JSX-leading fences)
 ✓ Search index building (from files)
-✓ Cache management (load/save/validation)
+✓ Cache management (load/save/validation + docs fingerprint checks)
 ✓ Document retrieval (by path)
 ✓ Section listing and filtering
 
 MCP Tools (test-tools.ts):
-✓ search_expo_docs (3 test cases)
-✓ get_expo_doc_content (4 test cases)
+✓ search_expo_docs (5 checks)
+✓ get_expo_doc_content (6 checks)
+✓ mdx_parser (1 check)
+✓ disk_cache_fingerprint (1 check)
 ✓ list_expo_sections (3 test cases)
-✓ get_expo_api_reference (4 test cases)
+✓ get_expo_api_reference (7 checks)
 ✓ get_expo_quick_start (3 test cases)
 
 Basic Tests (test-server.ts):
 ✓ Index loading (cache + fresh build)
-✓ Section listing (all 38 sections)
+✓ Section listing (all indexed sections, currently 40)
 ✓ Search functionality (3 queries)
-✓ Document retrieval (3 paths)
+✓ Document retrieval (4 paths)
 ✓ Cache validation
 
 Edge Cases:
 ✓ Non-existent paths (null handling)
 ✓ Empty search queries
 ✓ Cache expiration and rebuild
+✓ Cache invalidation on docs fingerprint changes
 ✓ Missing/malformed .mdx files
-✓ Section filtering
+✓ Section filtering before max result limiting
+✓ Special-character search queries (`[`, `(`, `C++`)
 
-Total Coverage: 17 comprehensive tool tests + 5 basic functionality tests
+Total Coverage: 26 comprehensive tool checks + 5 basic functionality checks
 ```
 
 ---

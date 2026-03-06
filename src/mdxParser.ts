@@ -85,11 +85,7 @@ function extractCodeBlocks(content: string): string[] {
   while ((match = codeBlockRegex.exec(content)) !== null) {
     const code = match[1].trim();
     if (code) {
-      // Filter out MDX component syntax - these are not actual code examples
-      // Real code blocks typically don't start with < or <!--
-      if (!code.startsWith("<") && !code.startsWith("<!--")) {
-        blocks.push(code);
-      }
+      blocks.push(code);
     }
   }
 

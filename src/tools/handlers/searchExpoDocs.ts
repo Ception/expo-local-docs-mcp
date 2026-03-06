@@ -12,6 +12,7 @@ export function handleSearchExpoDocs(args: {
   maxResults?: number;
 }): ToolResponse {
   const { query, section, maxResults = 10 } = args;
+  const normalizedSection = section?.trim();
 
   if (!query?.trim()) {
     return {
@@ -39,14 +40,9 @@ export function handleSearchExpoDocs(args: {
     };
   }
 
-  let results = searchInIndex(query.trim(), maxResults || config.maxResults);
-
-  // Filter by section if provided
-  if (section) {
-    results = results.filter((r) =>
-      r.path.toLowerCase().startsWith(`/${section.toLowerCase()}/`)
-    );
-  }
+  const results = searchInIndex(query.trim(), maxResults || config.maxResults, {
+    section: normalizedSection,
+  });
 
   const formattedResults = results.map((r) => ({
     title: r.title,
@@ -64,6 +60,7 @@ export function handleSearchExpoDocs(args: {
         text: JSON.stringify(
           {
             query,
+            section: normalizedSection,
             results: formattedResults,
             total: formattedResults.length,
           },

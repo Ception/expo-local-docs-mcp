@@ -37,7 +37,7 @@ export const toolDefinitions: Tool[] = [
         path: {
           type: "string",
           description:
-            "Path to the documentation page (e.g., '/guides/routing' or '/versions/latest/sdk/camera')",
+            "Path to the documentation page (e.g., '/guides/routing' or '/versions/v55.0.0/sdk/camera')",
         },
       },
       required: ["path"],
@@ -67,11 +67,12 @@ export const toolDefinitions: Tool[] = [
         module: {
           type: "string",
           description:
-            "Module name (e.g., 'camera', 'location'). Automatically handles 'expo-' prefix.",
+            "Module name (e.g., 'camera', 'expo-camera', 'expo-image-picker'). Handles package-style names and the 'expo-' prefix.",
         },
         version: {
           type: "string",
-          description: "SDK version (e.g., 'v54.0.0'). Defaults to latest.",
+          description:
+            "SDK version (e.g., 'v55.0.0' or '55.0.0'). Defaults to latest.",
         },
       },
       required: ["module"],

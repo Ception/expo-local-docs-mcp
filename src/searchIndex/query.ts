@@ -2,6 +2,90 @@
 import type { SearchIndexEntry } from "./types";
 import { getIndex } from "./state";
 
+interface ParsedVersion {
+  raw: string;
+  major: number;
+  minor: number;
+  patch: number;
+  prerelease: string | null;
+}
+
+function parseVersion(version: string): ParsedVersion | null {
+  const match = version.match(/^v(\d+)\.(\d+)\.(\d+)(?:-([A-Za-z0-9.-]+))?$/);
+  if (!match) {
+    return null;
+  }
+
+  return {
+    raw: version,
+    major: Number(match[1]),
+    minor: Number(match[2]),
+    patch: Number(match[3]),
+    prerelease: match[4] ?? null,
+  };
+}
+
+function compareVersions(a: ParsedVersion, b: ParsedVersion): number {
+  if (a.major !== b.major) return a.major - b.major;
+  if (a.minor !== b.minor) return a.minor - b.minor;
+  if (a.patch !== b.patch) return a.patch - b.patch;
+
+  // Stable releases are newer than prereleases of the same version.
+  if (!a.prerelease && b.prerelease) return 1;
+  if (a.prerelease && !b.prerelease) return -1;
+  if (!a.prerelease && !b.prerelease) return 0;
+
+  return a.prerelease!.localeCompare(b.prerelease!);
+}
+
+function findLatestVersion(index: SearchIndexEntry[]): string | null {
+  const versions = new Map<string, ParsedVersion>();
+
+  for (const entry of index) {
+    const match = entry.path.match(
+      /^\/versions\/(v\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?)(?=\/|$)/
+    );
+    if (!match) {
+      continue;
+    }
+
+    const parsed = parseVersion(match[1]);
+    if (parsed) {
+      versions.set(parsed.raw, parsed);
+    }
+  }
+
+  if (versions.size === 0) {
+    return null;
+  }
+
+  return Array.from(versions.values()).sort(compareVersions).at(-1)?.raw ?? null;
+}
+
+function resolveLatestPathAlias(
+  path: string,
+  index: SearchIndexEntry[]
+): string | null {
+  if (!path.startsWith("/versions/latest")) {
+    return null;
+  }
+
+  const latestVersion = findLatestVersion(index);
+  if (!latestVersion) {
+    return null;
+  }
+
+  return path.replace(/^\/versions\/latest(?=\/|$)/, `/versions/${latestVersion}`);
+}
+
+function isPathMatch(entryPath: string, targetPath: string): boolean {
+  return (
+    entryPath === targetPath ||
+    entryPath === targetPath.replace(/\/$/, "") ||
+    entryPath + "/" === targetPath
+  );
+}
+
 /**
  * Get document by exact path match
  */
@@ -9,13 +93,13 @@ export function getDocumentByPath(path: string): SearchIndexEntry | null {
   // Normalize path
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   const index = getIndex();
+  const latestPathAlias = resolveLatestPathAlias(normalizedPath, index);
 
   return (
     index.find(
       (entry) =>
-        entry.path === normalizedPath ||
-        entry.path === normalizedPath.replace(/\/$/, "") ||
-        entry.path + "/" === normalizedPath
+        isPathMatch(entry.path, normalizedPath) ||
+        (latestPathAlias ? isPathMatch(entry.path, latestPathAlias) : false)
     ) || null
   );
 }

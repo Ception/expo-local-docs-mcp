@@ -5,21 +5,21 @@ A blazing-fast MCP (Model Context Protocol) server for Expo documentation that r
 ## 🚀 Key Features
 
 - **Lightning Fast**: Reads directly from local `.mdx` files - no HTTP server needed
-- **Smart Caching**: Disk-based cache for instant subsequent startups (3ms!)
+- **Smart Caching**: Disk-based cache with version + docs fingerprint invalidation
 - **Full-Text Search**: Powerful search with intelligent scoring algorithm
 - **Zero Network**: Works completely offline
 - **Optimized for Bun**: Built specifically for Bun's performance
 
 ## 📊 Performance
 
-| Metric       | First Run      | Cached Run     |
-| ------------ | -------------- | -------------- |
-| Index Build  | ~78ms          | ~3ms           |
-| Search Query | 8ms            | 8ms            |
-| Documents    | 958 .mdx files | 958 .mdx files |
-| Cache Size   | ~2.7MB         | ~2.7MB         |
+| Metric       | First Run         | Cached Run       |
+| ------------ | ----------------- | ---------------- |
+| Index Build  | ~90-120ms         | ~12-20ms         |
+| Search Query | ~1-10ms           | ~1-10ms          |
+| Documents    | 997 .mdx files    | 997 .mdx files   |
+| Cache Size   | ~4.4MB            | ~4.4MB           |
 
-**26x faster** on subsequent runs!
+Measured on the current local docs snapshot.
 
 ## 🛠️ Setup
 
@@ -100,7 +100,7 @@ Then add to your Cursor MCP configuration:
 
 ---
 
-That's it! The package includes all 958 Expo SDK docs and works out of the box with any method.
+That's it! The package includes 997 Expo SDK docs in the current snapshot and works out of the box with any method.
 
 ### For Contributors: Local Development
 
@@ -114,7 +114,7 @@ If you want to contribute or customize:
 #### Installation
 
 ```bash
-cd /Users/x./Documents/repos/mcps/expo-local-mcp
+cd /path/to/expo-local-docs-mcp
 bun install
 bun run build
 ```
@@ -129,8 +129,8 @@ You should see:
 
 ```
 ✅ All tests passed!
-✓ Search index loaded: 958 entries in 78ms (first run)
-✓ Search index loaded: 958 entries in 3ms (cached)
+✓ Index loaded: 997 entries (~90-120ms first run)
+✓ Index loaded: 997 entries (~12-20ms cached run)
 ```
 
 #### Configuration for Local Development
@@ -142,10 +142,10 @@ Add to your Cursor MCP configuration (`~/.cursor/mcp.json` or `~/.config/cursor/
   "mcpServers": {
     "expo-docs": {
       "command": "bun",
-      "args": ["/<workingdirectory>/expo-local-mcp/dist/server.js"],
+      "args": ["/<workingdirectory>/expo-local-docs-mcp/dist/server.js"],
       "env": {
-        "EXPO_DOCS_PATH": "/<workingdirectory>/expo-local-mcp/expo-sdk",
-        "EXPO_CACHE_DIR": "/<workingdirectory>/expo-local-mcp/.expo-cache"
+        "EXPO_DOCS_PATH": "/<workingdirectory>/expo-local-docs-mcp/expo-sdk",
+        "EXPO_CACHE_DIR": "/<workingdirectory>/expo-local-docs-mcp/.expo-cache"
       }
     }
   }
@@ -215,14 +215,13 @@ Get API reference for a specific Expo SDK module.
 **Parameters:**
 
 - `module` (string, required): Module name (e.g., 'camera', 'expo-camera')
-- `version` (string, optional): SDK version (default: latest)
+- `version` (string, optional): SDK version (e.g., 'latest', 'v55.0.0', or '55.0.0')
 
 **Example:**
 
 ```json
 {
-  "module": "camera",
-  "version": "v54.0.0"
+  "module": "camera"
 }
 ```
 
@@ -298,6 +297,8 @@ bun run start
 
 # Run tests
 bun run test
+bun run test:tools
+bun run test:all
 
 # Clear cache (force rebuild)
 bun run clear-cache
@@ -348,11 +349,11 @@ bun run clear-cache
 ## 📝 How It Works
 
 1. **Startup**: Server initializes and attempts to load from disk cache
-2. **Cache Check**: If valid cache exists (<24h old, correct version), loads in ~3ms
-3. **Fresh Build**: If no cache, scans `expo-sdk/` recursively for all `.mdx` files (958 files)
+2. **Cache Check**: Cache is valid only when version, age, and docs fingerprint all match (typically ~12-20ms load)
+3. **Fresh Build**: If no valid cache, scans `expo-sdk/` recursively for all `.mdx` files (currently 997 files)
 4. **Parsing**: Extracts YAML frontmatter and strips MDX/JSX to get clean text content
-5. **Indexing**: Builds in-memory search index with path mapping (~78ms)
-6. **Caching**: Saves complete index to `search-index.json` (~2.7MB)
+5. **Indexing**: Builds in-memory search index with path mapping (~90-120ms)
+6. **Caching**: Saves complete index to `search-index.json` (~4.4MB)
 7. **Search**: Uses optimized scoring algorithm (exact matches > word matches)
 
 ### MDX Parsing
@@ -390,10 +391,10 @@ The search uses a dual-layer scoring system for maximum relevance:
 
 **Performance Optimizations:**
 
-- Pre-compiles regex patterns for each search word
+- Pre-compiles escaped regex patterns for each search word
 - Uses `for...of` loop instead of `.map()` for better performance
 - Only creates scored objects for entries with matches (score > 0)
-- Single-pass algorithm with early filtering
+- Single-pass algorithm with early section filtering
 
 ## 🔄 Updating Documentation
 
@@ -424,7 +425,7 @@ A: Run `npx expo-local-docs-mcp` directly in your terminal. It should start the 
 A: No! That was the old v1.x architecture. v2.0 reads files directly.
 
 **Q: Can I delete the cache folder?**  
-A: Yes! It will automatically rebuild (takes ~78ms). Cache locations:
+A: Yes! It will automatically rebuild (typically ~90-120ms). Cache locations:
 
 - **npm/npx**: `/tmp/expo-local-docs-mcp-cache/` (macOS/Linux)
 - **Local dev**: `.expo-cache/` (project root)
@@ -436,34 +437,34 @@ A: The server gracefully skips it and continues indexing other files.
 A: Yes! The npm package is built to work with Node.js. Local development can use either Bun or Node.
 
 **Q: How big is the npm package?**  
-A: ~4-5MB including all 958 Expo SDK docs. First startup takes ~78ms to build the search index.
+A: It depends on the included docs snapshot. The current repo snapshot indexes 997 `.mdx` docs and builds a ~4.4MB cache file.
 
 ## 📈 Indexed Content
 
 ```
-Total documents: 958 .mdx files
-Total sections: 38
-Cache size: ~2.7MB
+Total documents: 997 .mdx files
+Total sections: 40
+Cache size: ~4.4MB
 
 Top sections:
-  - versions: 588 docs (SDK API references)
-  - guides: 53 docs
-  - router: 40 docs (Expo Router)
-  - eas: 31 docs (EAS services)
+  - versions: 602 docs (SDK API references)
+  - guides: 59 docs
+  - router: 47 docs (Expo Router)
+  - eas: 35 docs (EAS services)
   - eas-update: 27 docs
   - tutorial: 25 docs
-  - develop: 20 docs
-  - build-reference: 20 docs
+  - develop: 21 docs
+  - build-reference: 21 docs
   - archive: 18 docs
-  - modules: 16 docs
+  - modules: 17 docs
 ```
 
 ## 🎉 Benefits vs v1.x
 
 | Feature            | v1.x (HTTP)          | v2.0 (Files) |
 | ------------------ | -------------------- | ------------ |
-| Speed (first run)  | 5-10s                | 78ms         |
-| Speed (cached)     | 1-2s                 | 3ms          |
+| Speed (first run)  | 5-10s                | 90-120ms     |
+| Speed (cached)     | 1-2s                 | 12-20ms      |
 | Network required   | Yes                  | No           |
 | Dependencies       | axios, cheerio       | None         |
 | HTTP server needed | Yes (localhost:3002) | No           |
@@ -480,6 +481,6 @@ This is a personal MCP server optimized for local Expo documentation access. Fee
 
 ---
 
-**Version**: 2.0.0  
+**Version**: 2.0.3  
 **Built with**: Bun + TypeScript  
 **Performance**: 🚀 Blazing Fast

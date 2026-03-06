@@ -1,6 +1,10 @@
 // src/searchIndex/loader.ts
 import type { SearchIndexEntry } from "./types";
-import { findMDXFiles, parseMDXFileForIndex } from "./fileUtils";
+import {
+  findMDXFilesWithMetadata,
+  getDocsFingerprint,
+  parseMDXFileForIndex,
+} from "./fileUtils";
 import {
   getIndex,
   setIndex,
@@ -24,17 +28,22 @@ export async function loadSearchIndex(
     return index;
   }
 
+  const startTime = performance.now();
+  const mdxFilesMetadata = findMDXFilesWithMetadata(docsPath, docsPath);
+  const mdxFiles = mdxFilesMetadata.map((file) => file.filePath);
+  const docsFingerprint = getDocsFingerprint(mdxFilesMetadata);
+
   // Try to load from disk cache first
   const diskCache = getDiskCache();
   if (diskCache) {
     console.error("Attempting to load search index from disk cache...");
-    const cachedIndex = diskCache.loadSearchIndex();
+    const cachedIndex = diskCache.loadSearchIndex(docsFingerprint);
     if (cachedIndex.length > 0) {
       setIndex(cachedIndex);
       setIndexLoaded(true);
       console.error(
         `✓ Loaded ${cachedIndex.length} entries from disk cache in ${Math.round(
-          performance.now()
+          performance.now() - startTime
         )}ms`
       );
       return cachedIndex;
@@ -44,10 +53,7 @@ export async function loadSearchIndex(
   }
 
   // Build index from .mdx files
-  const startTime = performance.now();
   console.error(`Building search index from ${docsPath}...`);
-
-  const mdxFiles = findMDXFiles(docsPath, docsPath);
   console.error(`Found ${mdxFiles.length} .mdx files`);
 
   const entries: SearchIndexEntry[] = [];
@@ -66,7 +72,7 @@ export async function loadSearchIndex(
 
   // Save the complete index to disk cache
   if (diskCache) {
-    diskCache.saveSearchIndex(entries);
+    diskCache.saveSearchIndex(entries, docsFingerprint);
   }
 
   console.error(`✓ Indexed ${entries.length} documents in ${duration}ms`);

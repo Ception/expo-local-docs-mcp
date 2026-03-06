@@ -7,6 +7,7 @@ interface CachedSearchIndex {
   entries: SearchIndexEntry[];
   timestamp: number;
   version: string;
+  docsFingerprint?: string;
 }
 
 export class DiskCache {
@@ -39,7 +40,7 @@ export class DiskCache {
   /**
    * Load the search index from disk cache
    */
-  loadSearchIndex(): SearchIndexEntry[] {
+  loadSearchIndex(expectedDocsFingerprint?: string): SearchIndexEntry[] {
     try {
       const indexPath = this.getIndexPath();
       if (!existsSync(indexPath)) {
@@ -55,6 +56,21 @@ export class DiskCache {
           `Cache version mismatch (expected ${this.CACHE_VERSION}, got ${cached.version}). Rebuilding index...`
         );
         return [];
+      }
+
+      // Check docs fingerprint compatibility
+      if (expectedDocsFingerprint) {
+        if (!cached.docsFingerprint) {
+          console.error(
+            "Cache fingerprint missing. Rebuilding index with fingerprint-aware cache..."
+          );
+          return [];
+        }
+
+        if (cached.docsFingerprint !== expectedDocsFingerprint) {
+          console.error("Cache fingerprint mismatch. Rebuilding index...");
+          return [];
+        }
       }
 
       // Check if cache is expired
@@ -83,13 +99,17 @@ export class DiskCache {
   /**
    * Save the search index to disk cache
    */
-  saveSearchIndex(entries: SearchIndexEntry[]): void {
+  saveSearchIndex(
+    entries: SearchIndexEntry[],
+    docsFingerprint?: string
+  ): void {
     try {
       const indexPath = this.getIndexPath();
       const cached: CachedSearchIndex = {
         entries,
         timestamp: Date.now(),
         version: this.CACHE_VERSION,
+        docsFingerprint,
       };
 
       writeFileSync(indexPath, JSON.stringify(cached));
@@ -108,7 +128,7 @@ export class DiskCache {
   /**
    * Check if cache exists and is valid
    */
-  isValid(): boolean {
+  isValid(expectedDocsFingerprint?: string): boolean {
     const indexPath = this.getIndexPath();
     if (!existsSync(indexPath)) {
       return false;
@@ -121,6 +141,16 @@ export class DiskCache {
       // Check version and age
       if (cached.version !== this.CACHE_VERSION) {
         return false;
+      }
+
+      if (expectedDocsFingerprint) {
+        if (!cached.docsFingerprint) {
+          return false;
+        }
+
+        if (cached.docsFingerprint !== expectedDocsFingerprint) {
+          return false;
+        }
       }
 
       const age = Date.now() - cached.timestamp;

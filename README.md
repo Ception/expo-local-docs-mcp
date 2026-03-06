@@ -12,12 +12,12 @@ A blazing-fast MCP (Model Context Protocol) server for Expo documentation that r
 
 ## 📊 Performance
 
-| Metric       | First Run         | Cached Run       |
-| ------------ | ----------------- | ---------------- |
-| Index Build  | ~90-120ms         | ~12-20ms         |
-| Search Query | ~1-10ms           | ~1-10ms          |
-| Documents    | 997 .mdx files    | 997 .mdx files   |
-| Cache Size   | ~4.4MB            | ~4.4MB           |
+| Metric       | First Run      | Cached Run     |
+| ------------ | -------------- | -------------- |
+| Index Build  | ~90-120ms      | ~12-20ms       |
+| Search Query | ~1-10ms        | ~1-10ms        |
+| Documents    | 997 .mdx files | 997 .mdx files |
+| Cache Size   | ~4.4MB         | ~4.4MB         |
 
 Measured on the current local docs snapshot.
 
@@ -481,6 +481,6 @@ This is a personal MCP server optimized for local Expo documentation access. Fee
 
 ---
 
-**Version**: 2.0.3  
+**Version**: 2.0.5  
 **Built with**: Bun + TypeScript  
 **Performance**: 🚀 Blazing Fast

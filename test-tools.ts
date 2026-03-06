@@ -186,6 +186,9 @@ async function testAllTools() {
       module: "camera",
       version: "55.0.0",
     });
+    const apiFromCaseSensitiveModule = handleGetExpoApiReference({
+      module: "captureRef",
+    });
     const searchResults = searchInIndex("maps", 3).filter((r) =>
       r.path.includes("/sdk/")
     );
@@ -193,7 +196,11 @@ async function testAllTools() {
     if (!apiDoc1 || !apiDoc2 || !apiDoc3 || !apiDocLatestAlias) {
       throw new Error("API references not found");
     }
-    if (apiFromPackageName.isError || apiFromNumericVersion.isError) {
+    if (
+      apiFromPackageName.isError ||
+      apiFromNumericVersion.isError ||
+      apiFromCaseSensitiveModule.isError
+    ) {
       throw new Error("Handler compatibility lookups failed");
     }
 
@@ -203,6 +210,7 @@ async function testAllTools() {
     console.log("  ✓ latest alias resolves to v55 API");
     console.log("  ✓ Package-style module names resolve");
     console.log("  ✓ Numeric version input resolves");
+    console.log("  ✓ Case-sensitive module paths resolve");
     console.log("  ✓ Fallback search for modules\n");
   } catch (error) {
     console.error(`  ❌ FAILED: ${error}\n`);

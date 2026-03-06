@@ -28,18 +28,28 @@ function normalizeVersion(version?: string): string {
 }
 
 function normalizeModuleCandidates(module: string): string[] {
-  const normalizedInput = module.trim().toLowerCase();
+  const normalizedInput = module.trim();
 
   const packageLeaf = normalizedInput.includes("/")
     ? normalizedInput.split("/").at(-1) || normalizedInput
     : normalizedInput;
 
-  const baseModule = packageLeaf.replace(/^expo-/, "");
+  const baseModule = packageLeaf.replace(/^expo-/i, "");
+  const lowercaseModule = baseModule.toLowerCase();
+  const camelFromPascal =
+    baseModule.length > 0
+      ? baseModule.charAt(0).toLowerCase() + baseModule.slice(1)
+      : baseModule;
 
   const candidates = [
+    // Preserve caller-provided casing first for case-sensitive path segments.
     baseModule,
+    camelFromPascal,
     baseModule.replace(/_/g, "-"),
     baseModule.replace(/-/g, ""),
+    lowercaseModule,
+    lowercaseModule.replace(/_/g, "-"),
+    lowercaseModule.replace(/-/g, ""),
   ];
 
   return Array.from(new Set(candidates.filter(Boolean)));
